@@ -25,13 +25,15 @@ public plugin_init()
 }
 
 public mutants_win(){
+	client_cmd(0,"spk afkarena/mutants_win");
 }
 
 public heroes_win(){
+	client_cmd(0,"spk afkarena/heroes_win");
 }
 
-public player_spawn(){
-
+public player_spawn(id){
+	client_cmd(id,"spk afkarena/spawn");
 }
 
 public player_killed(victim,killer){
@@ -54,6 +56,7 @@ public display_hud(){
 	if(countdown < 11 && countdown > 0){
 		set_hudmessage(160, 100, 100, 0.05, 0.50, random_num(0, 2), 0.02, 1.0, 0.01, 0.1, -1);
 		show_hudmessage(0,"%L", LANG_PLAYER, "INFECTION_BEGINS_IN", countdown)
+		client_cmd(0,"spk afkarena/countdown/%d", countdown);
 	} else {
 		// Infect someone
 	}
@@ -68,8 +71,13 @@ public display_hud(){
 }
 
 public player_damaged(victim,inflictor,attacker,Float:damage,damage_type){
-		if (victim == attacker || !is_user_alive(attacker))
-			return HAM_IGNORED;
+		// If player is valid
+		if(!is_user_connected(attacker) | !is_user_connected(victim))
+			return PLUGIN_HANDLED;
+		if(victim == attacker || !victim)
+			return PLUGIN_HANDLED;
+		if(get_user_team(attacker) == get_user_team(victim))
+			return PLUGIN_HANDLED;
 
 		exp[attacker] += 3 + level[attacker];
 
@@ -92,7 +100,9 @@ public check_exp(id){
 public round_start(){
 	set_hudmessage(160, 100, 100, 0.05, 0.50, random_num(0, 2), 0.02, 5.0, 0.01, 0.1, -1);
 	show_hudmessage(0,"%L", LANG_PLAYER, "INFECTION_STARTS_SOON");
+
 	countdown = 15;
+	client_cmd(0,"spk afkarena/countdown/15");
 
 	new CsTeams:team
 
@@ -108,11 +118,26 @@ public round_start(){
 			continue;
 		
 		// Set team
-		cs_set_player_team(id, CS_TEAM_CT, 0)
+		cs_set_player_team(id, CS_TEAM_CT, true)
 	}
 
 }
 
 public plugin_precache(){
 	precache_sound("afkarena/lvlup.wav");
+	precache_sound("afkarena/countdown/15.wav");
+	precache_sound("afkarena/countdown/10.wav");
+	precache_sound("afkarena/countdown/9.wav");
+	precache_sound("afkarena/countdown/8.wav");
+	precache_sound("afkarena/countdown/7.wav");
+	precache_sound("afkarena/countdown/6.wav");
+	precache_sound("afkarena/countdown/5.wav");
+	precache_sound("afkarena/countdown/4.wav");
+	precache_sound("afkarena/countdown/3.wav");
+	precache_sound("afkarena/countdown/2.wav");
+	precache_sound("afkarena/countdown/1.wav");
+	precache_sound("afkarena/draw.wav");
+	precache_sound("afkarena/heroes_win.wav");
+	precache_sound("afkarena/mutants_win.wav");
+	precache_sound("afkarena/spawn.wav");
 }
