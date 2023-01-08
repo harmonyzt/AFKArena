@@ -1,11 +1,10 @@
 #include < amxmodx >
+#include < amxmisc >
 #include < fun >
 #include < cstrike >
 #include < hamsandwich >
-#include < amxmisc >
+#include < fakemeta >
 #include < cs_teams_api >
-
-new sync_hud_count
 
 new countdown = 0;
 
@@ -22,7 +21,6 @@ public plugin_init()
 	RegisterHam(Ham_Killed, "player", "player_killed", 1);
 	RegisterHam(Ham_Spawn, "player", "player_spawn", 1);
 	RegisterHam(Ham_TakeDamage,"player","player_damaged");
-	sync_hud_count = CreateHudSyncObj();
     set_task(1.0,"display_hud",_,_,_,"b");
 }
 
@@ -33,17 +31,19 @@ public heroes_win(){
 }
 
 public player_spawn(){
+
 }
 
 public player_killed(victim,killer){
 	if(victim != killer) {
 		exp[killer] += level[killer] + 15; 
+		check_exp(killer)
 	}
 }
 
 public client_putinserver(id){
 	exp[id] = 0;
-	exp_next_lvl[id] = 300;
+	exp_next_lvl[id] = 250;
 	level[id] = 1;
 }
 
@@ -52,9 +52,10 @@ public display_hud(){
 		countdown--
 	}
 	if(countdown < 11 && countdown > 0){
-		client_print(0,print_chat,"%L", LANG_PLAYER, "INFECTION_BEGINS_IN", countdown)
+		set_hudmessage(160, 100, 100, 0.05, 0.50, random_num(0, 2), 0.02, 1.0, 0.01, 0.1, -1);
+		show_hudmessage(0,"%L", LANG_PLAYER, "INFECTION_BEGINS_IN", countdown)
 	} else {
-		// Begin infection
+		// Infect someone
 	}
 
 	for(new id = 1; id <= get_maxplayers(); id++){
@@ -66,32 +67,50 @@ public display_hud(){
 	}
 }
 
-public player_damaged(victim,inflictor,attacker,Float:damage,damagebits){
-		if(!attacker || attacker > get_maxplayers())
+public player_damaged(victim,inflictor,attacker,Float:damage,damage_type){
+		if (victim == attacker || !is_user_alive(attacker))
 			return HAM_IGNORED;
-	
-		if(0 < inflictor <= get_maxplayers()){
-			exp[attacker] += 3;
 
-			// Check EXP
-			check_exp(attacker);
-		}
-	return HAM_IGNORED
+		exp[attacker] += 3 + level[attacker];
+
+		// Check EXP
+		check_exp(attacker);
+
+		return HAM_IGNORED;
 }
 
 public check_exp(id){
 	if(exp[id] >= exp_next_lvl[id]){
 		level[id]++
 		money[id] += level[id] + 5;
-		exp_next_lvl[id] += 650;
+		exp_next_lvl[id] += 250;
 		client_cmd(id,"spk afkarena/lvlup");
 	}
 }
 
-// Infection Begins
+// Countdown Begins
 public round_start(){
-	client_print(0,print_chat,"%L", LANG_PLAYER, "INFECTION_STARTS_SOON");
+	set_hudmessage(160, 100, 100, 0.05, 0.50, random_num(0, 2), 0.02, 5.0, 0.01, 0.1, -1);
+	show_hudmessage(0,"%L", LANG_PLAYER, "INFECTION_STARTS_SOON");
 	countdown = 15;
+
+	new CsTeams:team
+
+	for (new id = 1; id <= get_maxplayers(); id++){
+		// Skip if not connected
+		if (!is_user_connected(id))
+			continue;
+
+		team = cs_get_user_team(id)
+		
+		// Skip if not playing
+		if (team == CS_TEAM_SPECTATOR || team == CS_TEAM_UNASSIGNED)
+			continue;
+		
+		// Set team
+		cs_set_player_team(id, CS_TEAM_CT, 0)
+	}
+
 }
 
 public plugin_precache(){
