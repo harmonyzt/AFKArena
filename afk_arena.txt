@@ -2,3 +2,4 @@
 HUD_EXP = Опыт: [%d/%d] | Уровень: [%d] | Деньги: [%d]
 INFECTION_STARTS_SOON = Зараженный уже среди нас...
 INFECTION_BEGINS_IN = Осталось %d секунд(а) до начала!
+FIRST_INFECTED = %s Стал одним из них!
