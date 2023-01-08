@@ -7,7 +7,7 @@
 
 new sync_hud_count
 
-new countdown = 0, is_counting = 0
+new countdown = 0;
 
 new exp[32], exp_next_lvl[32], level[32];
 new money[32];
@@ -48,8 +48,13 @@ public client_putinserver(id){
 }
 
 public display_hud(){
-	if(countdown > 0){
+	if(countdown >= 1){
 		countdown--
+	}
+	if(countdown < 11 && countdown > 0){
+		client_print(0,print_chat,"%L", LANG_PLAYER, "INFECTION_BEGINS_IN", countdown)
+	} else {
+		// Begin infection
 	}
 
 	for(new id = 1; id <= get_maxplayers(); id++){
@@ -85,27 +90,9 @@ public check_exp(id){
 
 // Infection Begins
 public round_start(){
-	set_hudmessage(160, 100, 100, 0.05, 0.50, random_num(0, 2), 0.02, 5.0, 0.01, 0.1, -1);
-	show_hudmessage(0,"%L", LANG_PLAYER, "INFECTION_STARTS_SOON");
-	count_start();
-}
-public count_start(){
+	client_print(0,print_chat,"%L", LANG_PLAYER, "INFECTION_STARTS_SOON");
 	countdown = 15;
-	is_counting = 1;
-
-	if(countdown <= 10){
-		set_hudmessage(160, 100, 100, 0.05, 0.50, random_num(0, 2), 0.02, 1.0, 0.01, 0.1, -1);
-		ShowSyncHudMsg(0,sync_hud_count,"%L", LANG_PLAYER, "INFECTION_BEGINS_IN", countdown)
-	}
-
 }
-
-
-
-
-
-
-
 
 public plugin_precache(){
 	precache_sound("afkarena/lvlup.wav");
