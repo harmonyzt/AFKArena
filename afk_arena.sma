@@ -10,7 +10,6 @@ new is_infected[32]
 new infection_began = 0;
 new exp[32], exp_next_lvl[32], level[32], money[32];
 new countdown = 20;
-new first_infected = 0;
 
 public plugin_init()
 {
@@ -69,33 +68,10 @@ public display_hud(){
 		client_cmd(0,"spk afkarena/countdown/%d", countdown);
 	} else if(countdown == 0 && infection_began == 0) {
 		// Infect someone
-		static name[32];
-		new CsTeams:team;
-
-		infection_began = 1;
-
 		new player[32], num, randomplayer
 		get_players(player, num, "ah")
 		randomplayer = player[random(num)]
-
-		get_user_name(randomplayer, name, 31);
-		client_print(0, print_chat,"%L", LANG_PLAYER, "FIRST_INFECTED", name)
-		infect_user(randomplayer);
-
-		for (new idz = 1; idz <= get_maxplayers(); idz++){
-			// Skip if not connected
-			if (!is_user_connected(idz) && !is_user_alive(idz) && is_user_infected(idz))
-				return;
-
-			team = cs_get_user_team(idz)
-			
-			// Skip if not playing
-			if (team == CS_TEAM_SPECTATOR || team == CS_TEAM_UNASSIGNED)
-				return;
-			
-			// Set team
-			cs_set_user_team(idz, CS_TEAM_CT,_, true)
-		}
+		set_task(2.0,"infect_first",randomplayer,_,_,_);
 	}
 
 	// EXP Money and level HUD
@@ -111,13 +87,13 @@ public display_hud(){
 public player_damaged(victim,inflictor,attacker,Float:damage,damage_type){
 		// If player is valid
 		if(!is_user_connected(attacker) | !is_user_connected(victim))
-			return;
+			return HAM_SUPERCEDE;
 		if(victim == attacker || !victim)
-			return;
+			return HAM_SUPERCEDE;
 		if(get_user_team(attacker) == get_user_team(victim))
-			return;
+			return HAM_SUPERCEDE;
 		if(infection_began == 1)
-			return;
+			return HAM_SUPERCEDE;
 
 		exp[attacker] += 3 + level[attacker];
 		// Check EXP
@@ -145,12 +121,36 @@ public round_start(){
 
 }
 
-infect_user(id){
+public infect_first(id){
 	if(is_user_alive(id) && is_user_connected(id)){
+	static name[32];
+
+		infection_began = 1;
+
+		get_user_name(id, name, 31);
+		client_print(0, print_chat,"%L", LANG_PLAYER, "FIRST_INFECTED", name)
+		
 		set_user_health(id, 350000)
 		is_infected[id] = 1;
-		cs_set_user_team(id, CS_TEAM_T,_ , true)
+		cs_set_player_team(id, CS_TEAM_T, true)
+
+		for (new idz = 1; idz <= get_maxplayers(); idz++){
+			// Skip if not connected
+			if (!is_user_connected(idz) && !is_user_alive(idz) && is_infected[idz] == 1)
+				return;
+			new CsTeams:team;
+
+			team = cs_get_user_team(idz)
+			
+			// Skip if not playing
+			if (team == CS_TEAM_SPECTATOR || team == CS_TEAM_UNASSIGNED)
+				return;
+			
+			// Set team
+			cs_set_user_team(idz, CS_TEAM_CT,_, true)
+		}
 	}
+	remove_task(id);
 }
 
 is_user_infected(id){
